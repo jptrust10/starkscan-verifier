@@ -16,7 +16,9 @@ const ui = new inquirer.ui.BottomBar();
 
 async function main() {
   try {
-    ui.log.write(`\n👋 Hello, welcome to the Starknet Contract Verifier!\n\n`);
+    ui.log.write(
+      `\n👋 Hello, Starknet explorer. Welcome to the Contract Verifier ✨\n\n`
+    );
     const rootCairoFile = await getRootCairoFile();
     const files = await getFileTree(rootCairoFile);
     const { classHash, networks } = await getClassHash();

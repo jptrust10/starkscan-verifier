@@ -22,9 +22,11 @@ export async function getRootCairoFile(): Promise<string> {
     // @ts-ignore
     type: "fuzzypath",
     name: "RootCairoFile",
-    message: "📄 Main Cairo Contract File to Verify:",
+    message: "Main file to be verified ☑️ ",
     itemType: "file",
+    searchText: "Searching for main cairo file...",
     suggestOnly: true,
+    suffix: " (Press Tab to autocomplete):",
     excludePath: (nodePath: string) => {
       return (
         // potential python envs
