@@ -22,7 +22,7 @@ export async function getRootCairoFile(): Promise<string> {
     // @ts-ignore
     type: "fuzzypath",
     name: "RootCairoFile",
-    message: "Main Cairo Contract File to Verify:",
+    message: "📄 Main Cairo Contract File to Verify:",
     itemType: "file",
     suggestOnly: true,
     excludePath: (nodePath: string) => {
