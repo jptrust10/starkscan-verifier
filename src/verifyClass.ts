@@ -40,9 +40,7 @@ async function verifyClassOnNetwork({
   const { data } = await axios.default.post(verificationUrl, sourceCode);
   const jobId = data.job_id;
 
-  const spinner = ora(
-    `Verifying ${sourceCode.name} on ${network}. Job ID: ${jobId}.\n`
-  ).start();
+  const spinner = ora().start();
 
   while (true) {
     const jobStatus = await getJobStatus({
@@ -50,10 +48,12 @@ async function verifyClassOnNetwork({
       network: network,
     });
 
+    spinner.text = `Verifying ${sourceCode.name} on ${network}. Job ID: ${jobId}. Status: ${jobStatus.status}`;
+
     if (jobStatus.status === "SUCCESS" || jobStatus.status === "FAILED") {
       if (jobStatus.status === "SUCCESS") {
         // TODO jkoh add check when user input class hash / contract
-        // spinner.succeed(${sourCode.name} is already verified on ${network}.);
+        // spinner.succeed(${sourCode.name} is already verified on ${network}.\n);
         // spinner.info(
         //   `View verified ${
         //     sourceCode.name
@@ -65,19 +65,19 @@ async function verifyClassOnNetwork({
         // spinner.stop();
 
         spinner.succeed(
-          `Verifying ${sourceCode.name} on ${network} succeeded!`
+          `Verifying ${sourceCode.name} on ${network} succeeded!\n`
         );
         spinner.info(
           `View verified ${
             sourceCode.name
-          } on StarkScan: ${getStarkscanClassUrl({
+          } on Starkscan: ${getStarkscanClassUrl({
             classHash: jobStatus.class_hash,
             network: network,
           })}\n`
         );
         spinner.stop();
       } else if (jobStatus.status === "FAILED") {
-        spinner.fail(`Verifying ${sourceCode.name} on ${network} failed.`);
+        spinner.fail(`Verifying ${sourceCode.name} on ${network} failed.\n`);
         spinner.warn(`Error: ${jobStatus.error_message}\n`);
         spinner.stop();
       }
@@ -85,7 +85,6 @@ async function verifyClassOnNetwork({
       return jobStatus;
     }
 
-    spinner.text = `Verifying on ${network}. Status: ${jobStatus.status}`;
     await waitFor(3000);
   }
 }

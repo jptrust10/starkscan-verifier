@@ -6,9 +6,6 @@ import { networkType } from "../types.js";
 import { getHashDetails } from "../api.js";
 import ora from "ora";
 
-const ui = new inquirer.ui.BottomBar();
-const spinner = ora();
-
 function validateHash(input: string): string | boolean {
   if (!isString(input)) {
     return "must be a string";
@@ -25,6 +22,8 @@ export async function getClassHash(): Promise<{
   classHash: string;
   networks: networkType[];
 }> {
+  const spinner = ora();
+
   // get hash from user
   const userInput = await inquirer.prompt({
     type: "input",
