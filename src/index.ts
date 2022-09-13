@@ -19,6 +19,10 @@ async function main() {
     ui.log.write(
       `\n👋 Hello, Starknet explorer. Welcome to the Contract Verifier ✨\n\n`
     );
+    ui.log.write(
+      `For python users, activate your virtual environment before running this tool.\n If you're using Protostar, make sure you run protostar install before running this tool.\n\n`
+    );
+
     const mainCairoFile = await getMainCairoFile();
     const files = await getFileTree(mainCairoFile);
     const { classHash, networks } = await getClassHash();
