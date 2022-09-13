@@ -47,7 +47,6 @@ export async function getClassHash(): Promise<{
     network: "mainnet"
   })
 
-
   const choices = []
   if (hashDetailsTestnet) {
     choices.push({
@@ -71,7 +70,7 @@ export async function getClassHash(): Promise<{
   }
 
   // get hash from user
-  const userInput2 = await inquirer.prompt(
+  const userInputRes = await inquirer.prompt(
     {
       type: "checkbox",
       name: "VerifyOnNetworks",
@@ -79,8 +78,7 @@ export async function getClassHash(): Promise<{
       choices: choices,
     },
   )
-  const userSelectedNetworks = userInput2.VerifyOnNetworks
-
+  const userSelectedNetworks = userInputRes.VerifyOnNetworks
 
   return {
     classHash: classHash,

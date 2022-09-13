@@ -1,9 +1,12 @@
 import inquirer from "inquirer"
 
 export async function getStarknetCompilerVersion(): Promise<string> {
+  inquirer.registerPrompt("search-list", require("inquirer-search-list"));
+
   const userInput = await inquirer.prompt(
     {
-      type: "list",
+      // @ts-ignore
+      type: "search-list",
       name: "StarknetCompilerVersion",
       message: "Compiler version:",
       choices: [

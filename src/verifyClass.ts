@@ -1,6 +1,7 @@
 import { SourceCode, networkType } from "types";
 import axios from "axios"
 import { waitFor } from "./utils";
+import { getStarkscanClassUrl, JobStatusRes } from "./api";
 
 
 async function getJobStatus({
@@ -26,14 +27,13 @@ function getVerificationUrl(network: networkType) {
   return "https://api.starkscan.co/api/verify_class"
 }
 
-
-async function verifyClass({
+async function verifyClassOnNetwork({
   sourceCode,
-  network,
+  network
 } : {
   sourceCode: SourceCode,
   network: networkType,
-}) {
+}): Promise<JobStatusRes> {
   const verificationUrl = getVerificationUrl(network)
   const { data } = await axios.post(verificationUrl, sourceCode)
   const jobId = data.job_id
@@ -43,9 +43,38 @@ async function verifyClass({
       jobId: jobId,
       network: network,
     })
-    console.log(jobStatus)
+
+    if (jobStatus.status === "SUCCESS" || jobStatus.status === "FAILED") {
+      console.log("starkscan url: ", getStarkscanClassUrl({
+        classHash: jobStatus.class_hash,
+        network: network,
+      }))
+      return jobStatus;
+    }
+
+    console.log(network, jobStatus)
     await waitFor(3000)
   }
+}
+
+// verify class on given networks
+async function verifyClass({
+  sourceCode,
+  networks,
+} : {
+  sourceCode: SourceCode,
+  networks: networkType[],
+}) {
+
+  const promises: Promise<JobStatusRes>[] = []
+  networks.forEach(network => {
+    promises.push(verifyClassOnNetwork({
+      sourceCode: sourceCode,
+      network: network
+    }))
+  })
+  const res = await Promise.allSettled(promises)
+  console.log(res)
 }
 
 export default verifyClass

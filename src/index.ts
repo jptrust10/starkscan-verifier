@@ -1,52 +1,48 @@
 import path from "path";
-import { SourceCode } from "types";
+import inquirer from "inquirer";
 
+import { SourceCode } from "./types";
 import verifyClass from "./verifyClass";
 import {
   getContractName,
-  getRootCairoFile,
+  getMainCairoFile,
   getFileTree,
   getClassHash,
   getStarknetCompilerVersion,
   getIsAccountContract,
 } from "./steps";
-import inquirer from "inquirer";
 
 const ui = new inquirer.ui.BottomBar();
 
 async function main() {
+
   try {
     ui.log.write(
       `\n👋 Hello, Starknet explorer. Welcome to the Contract Verifier ✨\n\n`
     );
-    const rootCairoFile = await getRootCairoFile();
-    const files = await getFileTree(rootCairoFile);
+    const mainCairoFile = await getMainCairoFile();
+    const files = await getFileTree(mainCairoFile);
     const { classHash, networks } = await getClassHash();
     const compilerVersion = await getStarknetCompilerVersion();
     const isAccountContract = await getIsAccountContract();
     const contractName = await getContractName({
-      defaultName: path.parse(rootCairoFile).name,
+      defaultName: path.parse(mainCairoFile).name,
     });
 
     const sourceCode: SourceCode = {
-      root_file_path: path.basename(rootCairoFile),
+      main_file_path: path.basename(mainCairoFile),
       class_hash: classHash,
       name: contractName,
       compiler_version: compilerVersion,
       is_account_contract: isAccountContract,
       files: files,
     };
-    for (let i = 0; i < networks.length; i++) {
-      const network = networks[i];
-      try {
-        await verifyClass({
-          sourceCode: sourceCode,
-          network: network,
-        });
-      } catch (err) {
-        console.log("[verifyClass] error", err);
-      }
-    }
+
+    await verifyClass({
+      sourceCode: sourceCode,
+      networks: networks,
+    });
+
   } catch (err) {
     console.log(err);
     throw err;

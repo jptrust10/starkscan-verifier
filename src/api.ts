@@ -1,20 +1,18 @@
 import axios from "axios"
 import { networkType } from "types"
 
-function getHashDetailsUrl({
-  hash,
+export function getStarkscanClassUrl({
+  classHash,
   network,
-} : { 
-  hash: string,
+} : {
+  classHash: string,
   network: networkType,
-}) {
+}): string {
   if (network === "mainnet") {
-    return `https://api.starkscan.co/api/hash/${hash}`
+    return `https://starkscan.co/class/${classHash}`
   }
-
-  return `https://api-testnet.starkscan.co/api/hash/${hash}`
+  return `https://testnet.starkscan.co/class/${classHash}`
 }
-
 interface Res {
   type: "class" | "contract",
   class_hash: string,
@@ -26,11 +24,12 @@ export async function getHashDetails({
   hash: string,
   network: networkType,
 }): Promise<Res | null> {
+  let url = `https://api-testnet.starkscan.co/api/hash/${hash}`
+  if (network === "mainnet") {
+    url = `https://api.starkscan.co/api/hash/${hash}`
+  }
+
   try {
-    const url = getHashDetailsUrl({
-      hash: hash,
-      network: network
-    })
     const { data } = await axios.get(url)
     return data;
   } catch (err: any) {
@@ -41,4 +40,25 @@ export async function getHashDetails({
       throw err
     }
   }
+}
+
+export interface JobStatusRes {
+  class_hash: string,
+  status: "PENDING" | "SUCCESS" | "FAILED",
+  error_message: string | null
+}
+export async function getJobStatus({
+  jobId,
+  network,
+} : {
+  jobId: string,
+  network: networkType,
+}): Promise<JobStatusRes> {
+  let url = `https://api-testnet.starkscan.co/api/verify_class_job_status/${jobId}`
+  if (network === "mainnet") {
+    url = `https://api.starkscan.co/api/verify_class_job_status/${jobId}`
+  }
+
+  const { data } = await axios.get(url)
+  return data
 }

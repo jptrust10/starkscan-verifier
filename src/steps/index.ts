@@ -1,5 +1,5 @@
 export * from "./getContractName"
-export * from "./getRootCairoFile"
+export * from "./getMainCairoFile"
 export * from "./getFileTree"
 export * from "./getClassHash"
 export * from "./getStarknetCompilerVersion"

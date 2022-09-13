@@ -3,7 +3,7 @@ export type Files = Record<string, string>
 
 // CodePkg used to verify a class
 export type SourceCode = {
-  root_file_path: string,
+  main_file_path: string,
   class_hash: string,
   name: string,
   compiler_version: string,
