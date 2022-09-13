@@ -17,11 +17,11 @@ const ui = new inquirer.ui.BottomBar();
 async function main() {
   try {
     ui.log.write(
-      `\n👋 Hello, Starknet explorer. Welcome to the Contract Verifier ✨\n\n`
+      `\n👋 Hello, Starknet explorer. Welcome to the Starkscan Contract Verifier ✨\n\n`
     );
-    ui.log.write(
-      `For python users, activate your virtual environment before running this tool.\n If you're using Protostar, make sure you run protostar install before running this tool.\n\n`
-    );
+    ui.log.write(`‼️  BEFORE YOU START:\n`);
+    ui.log.write(`🐍 Python users, please activate your virtual environment.`);
+    ui.log.write(`🌟 Protostar users, please run protostar install.\n\n`);
 
     const mainCairoFile = await getMainCairoFile();
     const files = await getFileTree(mainCairoFile);
@@ -45,8 +45,13 @@ async function main() {
       sourceCode: sourceCode,
       networks: networks,
     });
+
+    ui.log.write(
+      "✨ All done! Thanks for using the Starkscan Contract Verifier."
+    );
   } catch (err) {
-    console.log(err);
+    ui.log.write(`❌ ${err}`);
+    ui.log.write(`Please reach out to us on Twitter @starkscanco`);
     throw err;
   }
 }

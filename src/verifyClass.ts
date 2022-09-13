@@ -2,6 +2,9 @@ import { SourceCode, networkType } from "./types.js";
 import axios from "axios";
 import { waitFor } from "./utils.js";
 import { getStarkscanClassUrl, JobStatusRes } from "./api.js";
+import ora from "ora";
+import inquirer from "inquirer";
+const ui = new inquirer.ui.BottomBar();
 
 async function getJobStatus({
   jobId,
@@ -37,6 +40,10 @@ async function verifyClassOnNetwork({
   const { data } = await axios.default.post(verificationUrl, sourceCode);
   const jobId = data.job_id;
 
+  const spinner = ora(
+    `Verifying ${sourceCode.name} on ${network}. Job ID: ${jobId}.\n`
+  ).start();
+
   while (true) {
     const jobStatus = await getJobStatus({
       jobId: jobId,
@@ -44,17 +51,41 @@ async function verifyClassOnNetwork({
     });
 
     if (jobStatus.status === "SUCCESS" || jobStatus.status === "FAILED") {
-      console.log(
-        "starkscan url: ",
-        getStarkscanClassUrl({
-          classHash: jobStatus.class_hash,
-          network: network,
-        })
-      );
+      if (jobStatus.status === "SUCCESS") {
+        // TODO jkoh add check when user input class hash / contract
+        // spinner.succeed(${sourCode.name} is already verified on ${network}.);
+        // spinner.info(
+        //   `View verified ${
+        //     sourceCode.name
+        //   } on StarkScan: ${getStarkscanClassUrl({
+        //     classHash: jobStatus.class_hash,
+        //     network: network,
+        //   })}\n`
+        // );
+        // spinner.stop();
+
+        spinner.succeed(
+          `Verifying ${sourceCode.name} on ${network} succeeded!`
+        );
+        spinner.info(
+          `View verified ${
+            sourceCode.name
+          } on StarkScan: ${getStarkscanClassUrl({
+            classHash: jobStatus.class_hash,
+            network: network,
+          })}\n`
+        );
+        spinner.stop();
+      } else if (jobStatus.status === "FAILED") {
+        spinner.fail(`Verifying ${sourceCode.name} on ${network} failed.`);
+        spinner.warn(`Error: ${jobStatus.error_message}\n`);
+        spinner.stop();
+      }
+
       return jobStatus;
     }
 
-    console.log(network, jobStatus);
+    spinner.text = `Verifying on ${network}. Status: ${jobStatus.status}`;
     await waitFor(3000);
   }
 }
@@ -77,7 +108,6 @@ async function verifyClass({
     );
   });
   const res = await Promise.allSettled(promises);
-  console.log(res);
 }
 
 export default verifyClass;

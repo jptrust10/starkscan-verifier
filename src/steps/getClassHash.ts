@@ -55,6 +55,16 @@ export async function getClassHash(): Promise<{
       value: "testnet",
       checked: true,
     });
+
+    // spinner.succeed(${hash (what the user input)} is already verified on ${network}.);
+    // spinner.info(
+    //   `View verified ${
+    //     sourceCode.name
+    //   } on StarkScan: ${getStarkscanClassUrl({
+    //     classHash: jobStatus.class_hash,
+    //     network: network,
+    //   })}\n`
+    // );
   }
   if (hashDetailsMainnet) {
     spinner.succeed("Found address on Mainnet");
@@ -63,13 +73,23 @@ export async function getClassHash(): Promise<{
       value: "mainnet",
       checked: true,
     });
+
+    // spinner.succeed(${hash (what the user input)} is already verified on ${network}.);
+    // spinner.info(
+    //   `View verified ${
+    //     sourceCode.name
+    //   } on StarkScan: ${getStarkscanClassUrl({
+    //     classHash: jobStatus.class_hash,
+    //     network: network,
+    //   })}\n`
+    // );
   }
 
   const classHash =
     hashDetailsTestnet?.class_hash ?? hashDetailsMainnet?.class_hash;
   if (!classHash) {
     spinner.fail(
-      "Cannot find address on testnet and mainnet. Please try again.\n"
+      "Cannot find address on testnet or mainnet. Please try again.\n"
     );
     spinner.stop();
     return await getClassHash();
