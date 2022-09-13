@@ -2,9 +2,10 @@ import * as path from "path";
 import fs from "fs";
 import inquirer from "inquirer";
 import chalk from "chalk";
+import ora, { Ora } from "ora";
 
-import { Files } from "../types";
-import { getCairoPathsForNile, getCairoPathsForProtostar } from "../tools";
+import { Files } from "../types.js";
+import { getCairoPathsForNile, getCairoPathsForProtostar } from "../tools.js";
 
 const IMPORT_REGEX = /^from\s(.*?)\simport/gm;
 const ui = new inquirer.ui.BottomBar();
@@ -19,7 +20,7 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
     });
     return files;
   } catch (err) {
-    ui.log.write("cannot get files from default protostar");
+    // ui.log.write("cannot get files from default protostar");
   }
 
   try {
@@ -31,7 +32,7 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
     });
     return files;
   } catch (err) {
-    ui.log.write("cannot get files from default nile");
+    // ui.log.write("cannot get files from default nile");
   }
 
   // start search
@@ -50,6 +51,8 @@ class FileTree {
   mainFilePathName: string;
   files: Files;
   cairoPaths: string[];
+
+  spinner: Ora;
 
   static async getFiles({
     mainFilePath,
@@ -82,6 +85,7 @@ class FileTree {
     this.mainFilePathName = path.basename(mainFilePath);
     this.files = {};
     this.cairoPaths = [path.dirname(mainFilePath), ...cairoPaths];
+    this.spinner = ora().start();
   }
 
   async populateFileTree() {
@@ -123,21 +127,40 @@ class FileTree {
   }
 
   private async getFileContents(currentFilePath: string) {
+    const baseSearchText = `Searching for ${chalk.yellowBright.bold(
+      currentFilePath
+    )}`;
+
+    // this.spinner.text = baseSearchText;
+
+    // this.spinner.info(baseSearchText);
+
     // search base file
     const fileExists = fs.existsSync(currentFilePath);
     if (fileExists) {
-      ui.log.write(`FOUND FILE!: ${currentFilePath}`);
+      this.spinner.succeed(
+        `${chalk.yellowBright.bold(currentFilePath)} file found!\n`
+      );
       return fs.readFileSync(currentFilePath, "utf-8");
     }
 
     // search in potential paths
     for (let i = 0; i < this.cairoPaths.length; i++) {
       const searchPath = this.cairoPaths[i];
-      ui.log.write(`searching in ${searchPath}`);
+
+      this.spinner.info(
+        `${baseSearchText} in /${chalk.blueBright.bold(searchPath)}`
+      );
+      this.spinner.text = `${baseSearchText} in ${chalk.blueBright.bold(
+        searchPath
+      )}`;
       const potentialFullFilePath = path.join(searchPath, currentFilePath);
       const fileExists = fs.existsSync(potentialFullFilePath);
       if (fileExists) {
-        ui.log.write(`FOUND FILE!: ${potentialFullFilePath}`);
+        this.spinner.succeed(
+          `${chalk.yellowBright.bold(potentialFullFilePath)} file found!\n`
+        );
+
         return fs.readFileSync(potentialFullFilePath, "utf-8");
       }
     }
@@ -146,9 +169,12 @@ class FileTree {
     if (this.shouldPromptUser) {
       while (true) {
         // loop until file is found
-        ui.log.write(
-          `Could not find file: ${currentFilePath}, searched in ${this.cairoPaths}`
+        this.spinner.fail(
+          `Could not find file ${currentFilePath} in /${this.cairoPaths}\n`
         );
+
+        this.spinner.stop();
+
         const baseItem = currentFilePath.split(path.sep)[0];
         const userInput = await inquirer.prompt({
           type: "input",

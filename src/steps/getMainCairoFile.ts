@@ -1,6 +1,6 @@
 import { isString } from "class-validator";
 import inquirer from "inquirer";
-
+import fuzzyPath from "inquirer-fuzzy-path";
 
 async function validateMainCairoFile(input: string): Promise<string | boolean> {
   if (!isString(input)) {
@@ -16,7 +16,7 @@ async function validateMainCairoFile(input: string): Promise<string | boolean> {
 
 export async function getMainCairoFile(): Promise<string> {
   // https://github.com/adelsz/inquirer-fuzzy-path
-  inquirer.registerPrompt("fuzzypath", require("inquirer-fuzzy-path"));
+  inquirer.registerPrompt("fuzzypath", fuzzyPath);
 
   const userInput = await inquirer.prompt({
     // @ts-ignore
@@ -24,7 +24,7 @@ export async function getMainCairoFile(): Promise<string> {
     name: "MainCairoFile",
     message: "Main file to be verified ☑️ ",
     itemType: "file",
-    searchText: "Searching for main cairo file...",
+    searchText: "Searching for main file...",
     suggestOnly: false,
     excludePath: (nodePath: string) => {
       return (

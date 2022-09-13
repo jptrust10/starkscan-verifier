@@ -1,8 +1,8 @@
 import path from "path";
 import inquirer from "inquirer";
 
-import { SourceCode } from "./types";
-import verifyClass from "./verifyClass";
+import { SourceCode } from "./types.js";
+import verifyClass from "./verifyClass.js";
 import {
   getContractName,
   getMainCairoFile,
@@ -10,12 +10,11 @@ import {
   getClassHash,
   getStarknetCompilerVersion,
   getIsAccountContract,
-} from "./steps";
+} from "./steps/index.js";
 
 const ui = new inquirer.ui.BottomBar();
 
 async function main() {
-
   try {
     ui.log.write(
       `\n👋 Hello, Starknet explorer. Welcome to the Contract Verifier ✨\n\n`
@@ -42,7 +41,6 @@ async function main() {
       sourceCode: sourceCode,
       networks: networks,
     });
-
   } catch (err) {
     console.log(err);
     throw err;

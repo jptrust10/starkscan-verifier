@@ -1,23 +1,16 @@
-import inquirer from "inquirer"
+import inquirer from "inquirer";
+// @ts-ignore
+import searchList from "inquirer-search-list";
 
 export async function getStarknetCompilerVersion(): Promise<string> {
-  inquirer.registerPrompt("search-list", require("inquirer-search-list"));
+  inquirer.registerPrompt("search-list", searchList);
 
-  const userInput = await inquirer.prompt(
-    {
-      // @ts-ignore
-      type: "search-list",
-      name: "StarknetCompilerVersion",
-      message: "Compiler version:",
-      choices: [
-        "0.10.0",
-        "0.9.1",
-        "0.9.0",
-        "0.8.2",
-        "0.8.1",
-        "0.8.0"
-      ]
-    },
-  )
-  return userInput.StarknetCompilerVersion
+  const userInput = await inquirer.prompt({
+    // @ts-ignore
+    type: "search-list",
+    name: "StarknetCompilerVersion",
+    message: "Compiler version:",
+    choices: ["0.10.0", "0.9.1", "0.9.0", "0.8.2", "0.8.1", "0.8.0"],
+  });
+  return userInput.StarknetCompilerVersion;
 }

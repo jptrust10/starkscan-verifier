@@ -1,87 +1,82 @@
-import { isString } from "class-validator"
-import inquirer from "inquirer"
-import * as starknet from "starknet"
-import { networkType } from "types";
+import { isString } from "class-validator";
+import inquirer from "inquirer";
+import * as starknet from "starknet";
+import { networkType } from "../types.js";
 
-import { getHashDetails } from "../api"
+import { getHashDetails } from "../api.js";
 
 const ui = new inquirer.ui.BottomBar();
 
-
 function validateHash(input: string): string | boolean {
   if (!isString(input)) {
-    return "must be a string"
+    return "must be a string";
   }
 
   if (!starknet.number.isHex(input)) {
-    return "must be hex string"
+    return "must be hex string";
   }
 
   return true;
 }
 
-
 export async function getClassHash(): Promise<{
-  classHash: string,
-  networks: networkType[],
+  classHash: string;
+  networks: networkType[];
 }> {
   // get hash from user
-  const userInput = await inquirer.prompt(
-    {
-      type: "input",
-      name: "Hash",
-      message: "Contract Address / Class Hash: ",
-      validate(input: string) {
-        return validateHash(input)
-      },
+  const userInput = await inquirer.prompt({
+    type: "input",
+    name: "Hash",
+    message: "Contract Address / Class Hash: ",
+    validate(input: string) {
+      return validateHash(input);
     },
-  )
-  const userInputHash = userInput.Hash
+  });
+  const userInputHash = userInput.Hash;
 
   const hashDetailsTestnet = await getHashDetails({
     hash: userInputHash,
-    network: "testnet"
-  })
+    network: "testnet",
+  });
   const hashDetailsMainnet = await getHashDetails({
     hash: userInputHash,
-    network: "mainnet"
-  })
+    network: "mainnet",
+  });
 
-  const choices = []
+  const choices = [];
   if (hashDetailsTestnet) {
     choices.push({
       name: "testnet",
       value: "testnet",
       checked: true,
-    })
+    });
   }
   if (hashDetailsMainnet) {
     choices.push({
       name: "mainnet",
       value: "mainnet",
       checked: true,
-    })
+    });
   }
 
-  const classHash = hashDetailsTestnet?.class_hash ?? hashDetailsMainnet?.class_hash
+  const classHash =
+    hashDetailsTestnet?.class_hash ?? hashDetailsMainnet?.class_hash;
   if (!classHash) {
-    ui.log.write("cannot find hash on testnet and mainnet...")
-    return await getClassHash()
+    ui.log.write("cannot find hash on testnet and mainnet...");
+    return await getClassHash();
   }
 
   // get hash from user
-  const userInputRes = await inquirer.prompt(
-    {
-      type: "checkbox",
-      name: "VerifyOnNetworks",
-      message: "Select networks to verify",
-      choices: choices,
-    },
-  )
-  const userSelectedNetworks = userInputRes.VerifyOnNetworks
+  const userInputRes = await inquirer.prompt({
+    type: "checkbox",
+    name: "VerifyOnNetworks",
+    message: "Select networks to verify",
+    choices: choices,
+  });
+  const userSelectedNetworks = userInputRes.VerifyOnNetworks;
 
   return {
     classHash: classHash,
-    networks: userSelectedNetworks
-  }
+    networks: userSelectedNetworks,
+  };
 }
