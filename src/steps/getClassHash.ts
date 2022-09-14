@@ -1,10 +1,11 @@
 import { isString } from "class-validator";
 import inquirer from "inquirer";
 import * as starknet from "starknet";
-import { networkType } from "../types.js";
-
-import { getHashDetails } from "../api.js";
 import ora from "ora";
+
+import { networkType } from "../types.js";
+import { getHashDetails, getStarkscanClassUrl } from "../api.js";
+
 
 function validateHash(input: string): string | boolean {
   if (!isString(input)) {
@@ -22,6 +23,9 @@ export async function getClassHash(): Promise<{
   classHash: string;
   networks: networkType[];
 }> {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write("\n")
+
   const spinner = ora();
 
   // get hash from user
@@ -33,55 +37,68 @@ export async function getClassHash(): Promise<{
       return validateHash(input);
     },
   });
-  spinner.start("Looking for address on Testnet and Mainnet...");
-
   const userInputHash = userInput.Hash;
 
-  const hashDetailsTestnet = await getHashDetails({
+  spinner.start("Looking for address on Testnet and Mainnet...");
+  const promises = []
+  promises.push(await getHashDetails({
     hash: userInputHash,
     network: "testnet",
-  });
-  const hashDetailsMainnet = await getHashDetails({
+  }))
+  promises.push(await getHashDetails({
     hash: userInputHash,
     network: "mainnet",
-  });
+  }))
+  const hashDetails = await Promise.all(promises)
+  const hashDetailsTestnet = hashDetails[0]
+  const hashDetailsMainnet = hashDetails[1]
 
+  ui.log.write("\n")
   const choices = [];
   if (hashDetailsTestnet) {
-    spinner.succeed("Found address on Testnet");
-    choices.push({
-      name: "Testnet",
-      value: "testnet",
-      checked: true,
-    });
-
-    // spinner.succeed(${hash (what the user input)} is already verified on ${network}.);
-    // spinner.info(
-    //   `View verified ${
-    //     sourceCode.name
-    //   } on StarkScan: ${getStarkscanClassUrl({
-    //     classHash: jobStatus.class_hash,
-    //     network: network,
-    //   })}\n`
-    // );
+    if (hashDetailsTestnet.is_verified) {
+      const starkscanUrl = getStarkscanClassUrl({
+        classHash: hashDetailsTestnet.class_hash,
+        network: "testnet",
+      })
+      spinner.info(`Already verified on Testnet: ${starkscanUrl}`)
+    } else {
+      if (hashDetailsTestnet.type === "class") {
+        spinner.succeed("Found class hash on Testnet");
+      } else if (hashDetailsTestnet.type === "contract") {
+        spinner.succeed(`Found contract address on Testnet, which implements class hash ${hashDetailsTestnet.class_hash}`);
+      }
+      choices.push({
+        name: "Testnet",
+        value: "testnet",
+        checked: true,
+      });
+    }
   }
   if (hashDetailsMainnet) {
-    spinner.succeed("Found address on Mainnet");
-    choices.push({
-      name: "Mainnet",
-      value: "mainnet",
-      checked: true,
-    });
+    if (hashDetailsMainnet.is_verified) {
+      const starkscanUrl = getStarkscanClassUrl({
+        classHash: hashDetailsMainnet.class_hash,
+        network: "mainnet",
+      })
+      spinner.info(`Already verified on Mainnet: ${starkscanUrl}`)
+    } else {
+      if (hashDetailsMainnet.type === "class") {
+        spinner.succeed("Found class hash on Mainnet");
+      } else if (hashDetailsMainnet.type === "contract") {
+        spinner.succeed(`Found contract address on Mainnet, which implements class hash ${hashDetailsMainnet.class_hash}`);
+      }
+      choices.push({
+        name: "Mainnet",
+        value: "mainnet",
+        checked: true,
+      });  
+    }
+  }
+  ui.log.write("\n")
 
-    // spinner.succeed(${hash (what the user input)} is already verified on ${network}.);
-    // spinner.info(
-    //   `View verified ${
-    //     sourceCode.name
-    //   } on StarkScan: ${getStarkscanClassUrl({
-    //     classHash: jobStatus.class_hash,
-    //     network: network,
-    //   })}\n`
-    // );
+  if (!choices.length) {
+    process.exit(0)
   }
 
   const classHash =
@@ -93,7 +110,6 @@ export async function getClassHash(): Promise<{
     spinner.stop();
     return await getClassHash();
   }
-
   spinner.stop();
 
   // get hash from user

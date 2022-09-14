@@ -27,7 +27,7 @@ async function main() {
     const files = await getFileTree(mainCairoFile);
     const { classHash, networks } = await getClassHash();
     const compilerVersion = await getStarknetCompilerVersion();
-    const isAccountContract = await getIsAccountContract();
+    const isAccountContract = await getIsAccountContract(mainCairoFile);
     const contractName = await getContractName({
       defaultName: path.parse(mainCairoFile).name,
     });
@@ -46,10 +46,12 @@ async function main() {
       networks: networks,
     });
 
+    ui.log.write("\n")
     ui.log.write(
       "✨ All done! Thanks for using the Starkscan Contract Verifier."
     );
   } catch (err) {
+    ui.log.write("\n")
     ui.log.write(`❌ ${err}`);
     ui.log.write(`Please reach out to us on Twitter @starkscanco`);
     throw err;

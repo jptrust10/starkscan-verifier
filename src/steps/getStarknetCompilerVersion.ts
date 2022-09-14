@@ -3,6 +3,9 @@ import inquirer from "inquirer";
 import searchList from "inquirer-search-list";
 
 export async function getStarknetCompilerVersion(): Promise<string> {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write("\n")
+
   inquirer.registerPrompt("search-list", searchList);
 
   const userInput = await inquirer.prompt({

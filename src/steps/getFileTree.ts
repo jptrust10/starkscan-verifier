@@ -8,17 +8,19 @@ import { Files } from "../types.js";
 import { getCairoPathsForNile, getCairoPathsForProtostar } from "../tools.js";
 
 const IMPORT_REGEX = /^from\s(.*?)\simport/gm;
-const ui = new inquirer.ui.BottomBar();
 const spinner = ora();
 
 export async function getFileTree(mainFilePath: string): Promise<Files> {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write("\n")
+
   try {
     const cairoPaths = await getCairoPathsForProtostar();
     if (cairoPaths.length) {
-      spinner.succeed(`🌟 Protostar environment found!\n`);
+      spinner.succeed(`🌟 Protostar environment found!`);
       spinner.info(
-        `Searching in Protostar cairo path ${chalk.bold.blueBright(
-          cairoPaths.toString()
+        `Searching in Protostar cairo paths ${chalk.bold.blueBright(
+          cairoPaths.join(", ")
         )}\n`
       );
       const files = await FileTree.getFiles({
@@ -26,6 +28,8 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
         shouldPromptUser: false,
         cairoPaths: cairoPaths,
       });
+      ui.log.write("\n")
+      spinner.succeed(`All files found`);
       return files;
     }
   } catch (err) {
@@ -35,7 +39,7 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
   try {
     const cairoPaths = await getCairoPathsForNile();
     if (cairoPaths.length) {
-      spinner.succeed(`🌊 Nile environment found!\n`);
+      spinner.succeed(`🌊 Nile environment found!`);
       spinner.info(
         `Searching in Nile cairo path ${chalk.bold.blueBright(
           cairoPaths.toString()
@@ -46,6 +50,8 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
         shouldPromptUser: false,
         cairoPaths: cairoPaths,
       });
+      ui.log.write("\n")
+      spinner.succeed(`All files found`);
       return files;
     }
   } catch (err) {
@@ -53,11 +59,14 @@ export async function getFileTree(mainFilePath: string): Promise<Files> {
   }
 
   // start search
+  spinner.info("Searching for files\n");
   const files = await FileTree.getFiles({
     mainFilePath: mainFilePath,
     shouldPromptUser: true,
     cairoPaths: [],
   });
+  ui.log.write("\n")
+  spinner.succeed(`All files found`);
   return files;
 }
 
@@ -108,6 +117,12 @@ class FileTree {
     return this.files;
   }
 
+  logFileFound(fpath: string) {
+    spinner.succeed(
+      `📄 ${chalk.yellowBright.bold(`./${fpath}`)} file found!`
+    );
+  }
+
   private async _populateFileTree(currentFilePath: string) {
     if (currentFilePath in this.files) {
       // this file path has already been found
@@ -145,9 +160,7 @@ class FileTree {
     // search base file
     const fileExists = fs.existsSync(currentFilePath);
     if (fileExists) {
-      spinner.succeed(
-        `📄${chalk.yellowBright.bold(`./${currentFilePath}`)} file found!\n`
-      );
+      this.logFileFound(currentFilePath)
       return fs.readFileSync(currentFilePath, "utf-8");
     }
 
@@ -158,26 +171,20 @@ class FileTree {
       const potentialFullFilePath = path.join(searchPath, currentFilePath);
       const fileExists = fs.existsSync(potentialFullFilePath);
       if (fileExists) {
-        spinner.succeed(
-          `📄 ${chalk.yellowBright.bold(
-            `./${potentialFullFilePath}`
-          )} file found!\n`
-        );
-
+        this.logFileFound(potentialFullFilePath)
         return fs.readFileSync(potentialFullFilePath, "utf-8");
       }
     }
 
     // cannot find file
     if (this.shouldPromptUser) {
+      spinner.fail(
+        `Could not find file ${chalk.yellowBright.bold(
+          currentFilePath
+        )} in ${chalk.blueBright.bold(`./${this.cairoPaths}`)}`
+      );
       while (true) {
         // loop until file is found
-        spinner.fail(
-          `Could not find file ${chalk.yellowBright.bold(
-            currentFilePath
-          )} in ${chalk.blueBright.bold(`./${this.cairoPaths}`)}\n`
-        );
-
         spinner.stop();
 
         const baseItem = currentFilePath.split(path.sep)[0];
@@ -195,13 +202,14 @@ class FileTree {
         );
         if (fs.existsSync(potentialFullFilePath)) {
           this.cairoPaths.push(potentialNewCairoPath);
-          // ui.log.write(`FOUND FILE!: ${potentialFullFilePath}`);
-          spinner.succeed(
-            `${chalk.yellowBright.bold(
-              `./${potentialFullFilePath}`
-            )} file found!\n`
-          );
+          this.logFileFound(potentialFullFilePath)
           return fs.readFileSync(potentialFullFilePath, "utf-8");
+        } else {
+          spinner.fail(
+            `Could not find file ${chalk.yellowBright.bold(
+              currentFilePath
+            )} in ${chalk.blueBright.bold(`./${potentialFullFilePath}`)}\n`
+          );
         }
         // cannot find... continue looping
       }

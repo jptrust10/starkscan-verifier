@@ -26,6 +26,9 @@ export async function getContractName({
 } : {
   defaultName: string
 }): Promise<string> {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write("\n")
+
   const userInput = await inquirer.prompt(
     {
       type: "input",
